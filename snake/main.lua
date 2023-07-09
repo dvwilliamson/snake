@@ -2,8 +2,8 @@
     2023
     Snake Remake
 
-    snake-0
-    "The Day-0 Update"
+    snake-1
+    "The Music Update"
 
     -- Main Program --
 
@@ -18,8 +18,12 @@
 ]]
 
 
-push = require 'push'
-GameState = require 'states'
+local push = require 'push'
+local Class = require 'class' -- Will use in later updates
+
+local GameState = require 'states'
+local Sounds = require 'sounds'
+local Fonts = require 'fonts'
 
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
@@ -32,16 +36,18 @@ VIRTUAL_HEIGHT = 243
 function love.load()
     love.window.setTitle('Snake')
 
-    love.graphics.setDefaultFilter('nearest', 'nearest') -- Make the aliasing pixely
-
-    largeFont = love.graphics.newFont('fonts/Press_Start_2P/font.ttf', 32)
-
-
     push:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, WINDOW_WIDTH, WINDOW_HEIGHT, {
         fullscreen = false,
         resizable = true,
         vsync = true
     })
+
+    math.randomseed(os.time())
+
+    love.graphics.setDefaultFilter('nearest', 'nearest') -- Make the aliasing pixely
+
+    Sounds.music:setLooping(true)
+    Sounds.music:play()
 
     gameState = GameState.START
 end
@@ -52,17 +58,26 @@ end
 
 function love.draw()
     push:apply('start')
+    love.graphics.clear(60 / 255, 70 / 255, 85 / 255, 255 / 255)
     drawTitle()
     push:apply('end')
 end
 
 function drawTitle()
-    love.graphics.setFont(largeFont)
-
+    love.graphics.setFont(Fonts['large']['font'])
     love.graphics.printf(
         'Snake',
-        0,                       -- X: top left corner
-        VIRTUAL_HEIGHT / 4 - 16, -- Y: Display 1/4 down the screen
+        0,                                                -- X: top left corner
+        VIRTUAL_HEIGHT / 4 - Fonts['large']['half_size'], -- Y: Display 1/4 down the screen
+        VIRTUAL_WIDTH,
+        'center'
+    )
+
+    love.graphics.setFont(Fonts['small']['font'])
+    love.graphics.printf(
+        'press enter to start..',
+        0,
+        VIRTUAL_HEIGHT / 4 + Fonts['large']['half_size'] + 10 - Fonts['small']['half_size'],
         VIRTUAL_WIDTH,
         'center'
     )
