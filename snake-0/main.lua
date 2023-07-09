@@ -26,8 +26,6 @@ WINDOW_HEIGHT = 720
 VIRTUAL_WIDTH = 432
 VIRTUAL_HEIGHT = 243
 
--- local gameState = GameState.START
-
 --[[
     Runs on startup. Used to initialize the game.
 ]]
