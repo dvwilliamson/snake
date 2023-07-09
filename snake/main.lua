@@ -2,8 +2,8 @@
     2023
     Snake Remake
 
-    snake-2
-    "The Moving Snake Update"
+    snake-3
+    "The Controllabe Snake Update"
 
     -- Main Program --
 
@@ -30,9 +30,9 @@ require 'Snake'
 
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
-VIRTUAL_WIDTH = 432
-VIRTUAL_HEIGHT = 243
-TICK_SPEED = .2 -- Seconds
+VIRTUAL_WIDTH = 320
+VIRTUAL_HEIGHT = 180
+TICK_SPEED = .1 -- Seconds
 
 local apple
 local player
@@ -63,8 +63,8 @@ function love.load()
     game_state = GameState.START
     tick_tracker = 0
 
-    apple = Apple(VIRTUAL_WIDTH / 2 - 2, VIRTUAL_HEIGHT * (3 / 4) - 2, 4, 4)
-    player = Snake(VIRTUAL_WIDTH / 2 - 2, VIRTUAL_HEIGHT / 2 - 2, 4, 4, -4, 0)
+    apple = Apple(clip(VIRTUAL_WIDTH / 2 - 2, 4), clip(VIRTUAL_HEIGHT * (3 / 4) - 2, 4), 4, 4)
+    player = Snake(clip(VIRTUAL_WIDTH / 2 - 2, 4), clip(VIRTUAL_HEIGHT / 2 - 2, 4), 4, 4, -4, 0)
 end
 
 function love.resize(w, h)
@@ -102,6 +102,30 @@ function love.keypressed(key)
             Sounds.countdown:play()
         end
     end
+
+    if game_state == GameState.PLAY then
+        if key == 'up' then
+            if not (player.dy > 0) then -- Prevent going up from down
+                player.pending_dx = 0
+                player.pending_dy = -player.height
+            end
+        elseif key == 'down' then
+            if not (player.dy < 0) then -- Prevent going down from up
+                player.pending_dx = 0
+                player.pending_dy = player.height
+            end
+        elseif key == 'left' then
+            if not (player.dx > 0) then -- Prevent going left from right
+                player.pending_dx = -player.width
+                player.pending_dy = 0
+            end
+        elseif key == 'right' then
+            if not (player.dx < 0) then -- Prevent going right from left
+                player.pending_dx = player.width
+                player.pending_dy = 0
+            end
+        end
+    end
 end
 
 function love.draw()
@@ -134,4 +158,16 @@ function drawTitle()
         VIRTUAL_WIDTH,
         'center'
     )
+end
+
+--[[
+    To make the game more grid-like, this function corrects the pos
+    parameter to the nearest grid position based on the provided value
+]]
+function clip(pos, value)
+    local result = pos - (pos % value)
+    if pos % value > 2 then
+        result = result + value
+    end
+    return result
 end
