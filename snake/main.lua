@@ -2,8 +2,8 @@
     2023
     Snake Remake
 
-    snake-4
-    "The Apple Update"
+    snake-5
+    "The Growth Update"
 
     -- Main Program --
 
@@ -32,13 +32,13 @@ WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
 VIRTUAL_WIDTH = 320
 VIRTUAL_HEIGHT = 180
-TICK_SPEED = .1 -- Seconds
 
 local apple
 local player
 local game_state
 local tick_tracker
 local score
+local tick_speed
 
 --[[
     Runs on startup. Used to initialize the game.
@@ -64,6 +64,7 @@ function reset()
     game_state = GameState.START
     tick_tracker = 0
     score = 0
+    tick_speed = 0.1
 
     apple = Apple(clip(VIRTUAL_WIDTH / 2 - 2, 4), clip(VIRTUAL_HEIGHT * (3 / 4) - 2, 4), 4, 4)
     player = Snake(clip(VIRTUAL_WIDTH / 2 - 2, 4), clip(VIRTUAL_HEIGHT / 2 - 2, 4), 4, 4, -4, 0)
@@ -80,8 +81,8 @@ end
 
 function tick(dt)
     tick_tracker = tick_tracker + dt
-    if tick_tracker > TICK_SPEED then
-        tick_tracker = tick_tracker % TICK_SPEED
+    if tick_tracker > tick_speed then
+        tick_tracker = tick_tracker % tick_speed
         return true
     end
     return false
@@ -98,10 +99,13 @@ function love.update(dt) -- Delta Time (Time passed since last update)
             if apple:collides(player) then
                 Sounds['collect_item']:play()
                 relocate_apple()
+                tick_speed = tick_speed - 0.001
                 score = score + 1
+                player:grow()
             end
 
-            if player.x < 0 or
+            if player:tailCollides() or
+                player.x < 0 or
                 player.y < 0 or
                 player.x >= VIRTUAL_WIDTH or
                 player.y >= VIRTUAL_HEIGHT
