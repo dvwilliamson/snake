@@ -2,8 +2,8 @@
     2023
     Snake Remake
 
-    snake-3
-    "The Controllabe Snake Update"
+    snake-4
+    "The Apple Update"
 
     -- Main Program --
 
@@ -38,6 +38,7 @@ local apple
 local player
 local game_state
 local tick_tracker
+local score
 
 --[[
     Runs on startup. Used to initialize the game.
@@ -55,16 +56,22 @@ function love.load()
 
     love.graphics.setDefaultFilter('nearest', 'nearest') -- Make the aliasing pixely
 
-    Sounds.music:setLooping(true)
-    Sounds.music:play()
-
-
     -- Initialize variables
+    reset()
+end
+
+function reset()
     game_state = GameState.START
     tick_tracker = 0
+    score = 0
 
     apple = Apple(clip(VIRTUAL_WIDTH / 2 - 2, 4), clip(VIRTUAL_HEIGHT * (3 / 4) - 2, 4), 4, 4)
     player = Snake(clip(VIRTUAL_WIDTH / 2 - 2, 4), clip(VIRTUAL_HEIGHT / 2 - 2, 4), 4, 4, -4, 0)
+
+    if not Sounds.music:isPlaying() then
+        Sounds.music:setLooping(true)
+        Sounds.music:play()
+    end
 end
 
 function love.resize(w, h)
@@ -88,6 +95,20 @@ function love.update(dt) -- Delta Time (Time passed since last update)
     elseif game_state == GameState.PLAY then
         if tick(dt) then
             player:update(dt)
+            if apple:collides(player) then
+                Sounds['collect_item']:play()
+                relocate_apple()
+                score = score + 1
+            end
+
+            if player.x < 0 or
+                player.y < 0 or
+                player.x >= VIRTUAL_WIDTH or
+                player.y >= VIRTUAL_HEIGHT
+            then
+                game_state = GameState.GAME_OVER
+                Sounds['game_over']:play()
+            end
         end
     end
 end
@@ -100,6 +121,8 @@ function love.keypressed(key)
             Sounds.music:stop()
             game_state = GameState.PENDING_PLAY
             Sounds.countdown:play()
+        elseif game_state == GameState.GAME_OVER and not Sounds['game_over']:isPlaying() then
+            reset()
         end
     end
 
@@ -133,10 +156,19 @@ function love.draw()
     love.graphics.clear(60 / 255, 70 / 255, 85 / 255, 255 / 255)
     if game_state == GameState.START then
         drawTitle()
+        apple:render()
+        player:render()
     elseif game_state == GameState.PENDING_PLAY then
+        drawScore()
+        apple:render()
+        player:render()
+    elseif game_state == GameState.PLAY then
+        drawScore()
+        apple:render()
+        player:render()
+    elseif game_state == GameState.GAME_OVER then
+        drawGameOver()
     end
-    apple:render()
-    player:render()
     push:apply('end')
 end
 
@@ -160,6 +192,57 @@ function drawTitle()
     )
 end
 
+function drawGameOver()
+    love.graphics.setFont(Fonts['large']['font'])
+    love.graphics.printf(
+        'Game Over',
+        0,
+        VIRTUAL_HEIGHT / 2 - Fonts['large']['size'] - 5,
+        VIRTUAL_WIDTH,
+        'center'
+    )
+
+    love.graphics.setFont(Fonts['small']['font'])
+    love.graphics.printf(
+        'Final Score:',
+        0,
+        VIRTUAL_HEIGHT / 2 + 5,
+        VIRTUAL_WIDTH,
+        'center'
+    )
+
+    love.graphics.setFont(Fonts['medium']['font'])
+    love.graphics.printf(
+        tostring(score),
+        0,
+        VIRTUAL_HEIGHT / 2 + 15 + Fonts['small']['size'],
+        VIRTUAL_WIDTH,
+        'center'
+    )
+
+    if not Sounds['game_over']:isPlaying() then
+        love.graphics.setFont(Fonts['small']['font'])
+        love.graphics.printf(
+            'Press enter to Continue...',
+            0,
+            VIRTUAL_HEIGHT - 10 - Fonts['small']['half_size'],
+            VIRTUAL_WIDTH,
+            'right'
+        )
+    end
+end
+
+function drawScore()
+    love.graphics.setFont(Fonts['small']['font'])
+    love.graphics.printf(
+        tostring(score),
+        10,
+        10,
+        VIRTUAL_WIDTH - 10,
+        'left'
+    )
+end
+
 --[[
     To make the game more grid-like, this function corrects the pos
     parameter to the nearest grid position based on the provided value
@@ -170,4 +253,11 @@ function clip(pos, value)
         result = result + value
     end
     return result
+end
+
+function relocate_apple()
+    local new_x = clip(math.random(0, VIRTUAL_WIDTH - apple.width), apple.width)
+    local new_y = clip(math.random(0, VIRTUAL_HEIGHT - apple.height), apple.height)
+    apple.x = new_x
+    apple.y = new_y
 end
