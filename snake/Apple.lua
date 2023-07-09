@@ -21,12 +21,11 @@ function Apple:init(x, y, width, height)
     self.height = height
 end
 
+--[[
+    Since we are gridded, we just have to check if the x and y are the same
+]]
 function Apple:collides(other)
-    return not
-        self.x + self.width < other.x or
-        self.x > other.x + other.width or
-        self.y + self.height < other.y or
-        self.y > other.y + other.width
+    return self.x == other.x and self.y == other.y
 end
 
 function Apple:render()
